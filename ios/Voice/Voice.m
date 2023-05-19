@@ -198,13 +198,23 @@
         }
         
         BOOL isFinal = result.isFinal;
-        
+
         NSMutableArray* transcriptionDics = [NSMutableArray new];
         for (SFTranscription* transcription in result.transcriptions) {
-            [transcriptionDics addObject:transcription.formattedString];
+            NSMutableArray* segmentDics = [NSMutableArray new];
+            for (SFTranscriptionSegment* segment in transcription.segments) {
+            // Store each segment as a dictionary including the substring and confidence score
+                [segmentDics addObject:@{
+                    @"substring": segment.substring,
+                    @"confidence": @(segment.confidence)
+                }];
+            }
+        // Add the array of segments (each represented as a dictionary) to the array of transcriptions
+            [transcriptionDics addObject:segmentDics];
         }
-        
+
         [self sendResult :nil :result.bestTranscription.formattedString :transcriptionDics :[NSNumber numberWithBool:isFinal]];
+
         
         if (isFinal || self.recognitionTask.isCancelled || self.recognitionTask.isFinishing) {
             [self sendEventWithName:@"onSpeechEnd" body:nil];
@@ -308,7 +318,7 @@
         [self sendEventWithName:@"onSpeechError" body:@{@"error": error}];
     }
     if (bestTranscription != nil) {
-        [self sendEventWithName:@"onSpeechResults" body:@{@"value":@[bestTranscription, speechRecognitionMetadata]} ];
+        [self sendEventWithName:@"onSpeechResults" body:@{@"value":@[bestTranscription]} ];
     }
     if (transcriptions != nil) {
         [self sendEventWithName:@"onSpeechPartialResults" body:@{@"value":transcriptions}];
@@ -403,3 +413,4 @@ RCT_EXPORT_MODULE()
 
 
 @end
+
